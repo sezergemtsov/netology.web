@@ -10,7 +10,6 @@ public class Request {
     private String method;
     private String path;
     private List<String> headers;
-
     private List<NameValuePair> queryParams;
 
 

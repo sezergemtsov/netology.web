@@ -15,9 +15,12 @@ public class ConnectionController implements Runnable {
     ServerSocket socket;
     ConcurrentHashMap<String, ConcurrentHashMap<String,Handler>> handlers;
 
+    final AtomicReference<Request> request;
+
     protected ConnectionController(ServerSocket socket, ConcurrentHashMap<String,ConcurrentHashMap<String,Handler>> handlers) {
         this.socket = socket;
         this.handlers = handlers;
+        request = new AtomicReference<>(new Request());
     }
 
     @Override
@@ -32,8 +35,6 @@ public class ConnectionController implements Runnable {
             in.mark(0);
             final var buffer = new byte[limit];
             final var read = in.read(buffer,0,limit);
-
-            AtomicReference<Request> request = new AtomicReference<>(new Request());
 
             // ищем request line
             final var requestLineDelimiter = new byte[]{'\r', '\n'};
@@ -59,18 +60,10 @@ public class ConnectionController implements Runnable {
             if (!handlers.containsKey(request.get().getMethod())) {
                 notFound(out);
                 return;
-            } else {
-                System.out.println(method);
             }
             if (!handlers.get(method).containsKey(request.get().getPath())) {
                 notFound(out);
                 return;
-            } else {
-                System.out.println(request.get().getPath());
-                request.get().getQueryParams().forEach(x->{
-                    System.out.print(x.getName()+" = ");
-                    System.out.print(x.getValue()+"\r\n");
-                });
             }
             final var headersDelimiter = new byte[]{'\r', '\n', '\r', '\n'};
             final var headersStart = requestLineEnd + requestLineDelimiter.length;
@@ -86,7 +79,6 @@ public class ConnectionController implements Runnable {
             final var headersBytes = in.readNBytes(headersEnd - headersStart);
             final var headers = Arrays.asList(new String(headersBytes).split("\r\n"));
             request.get().setHeaders(headers);
-            System.out.println(headers);
             // для GET тела нет
             if (!Objects.equals(method, "GET")) {
                 in.skip(headersDelimiter.length);
@@ -100,7 +92,7 @@ public class ConnectionController implements Runnable {
                     System.out.println(body);
                 }
             }
-            handlers.get(method).get(pathLine).toHandle(out, request);
+            handlers.get(request.get().getMethod()).get(request.get().getPath()).toHandle(out, request);
             out.flush();
         } catch (IOException e) {
             throw new RuntimeException(e);

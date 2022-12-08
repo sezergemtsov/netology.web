@@ -12,6 +12,18 @@ public class Main {
     server.setNewHandler("GET", "/messages", new Handler(){
       @Override
       public void toHandle(BufferedOutputStream out, AtomicReference<Request> request) {
+        if (request.get().getMethod() != null) {
+          System.out.println(request.get().getMethod());
+        }
+        if (request.get().getPath() != null) {
+          System.out.println(request.get().getPath());
+        }
+        if (!request.get().getQueryParams().isEmpty()) {
+          request.get().getQueryParams().forEach(x->{
+            System.out.print(x.getName()+" = ");
+            System.out.print(x.getValue()+"\r\n");
+          });
+        }
         try {
           out.write((
                   "HTTP/1.1 200 Ok\r\n" +
