@@ -2,6 +2,7 @@ package ru.netology;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Main {
   public static void main(String[] args) {
@@ -10,7 +11,23 @@ public class Main {
     Server server = new Server(port);
     server.setNewHandler("GET", "/messages", new Handler(){
       @Override
-      public void toHandle(BufferedOutputStream out) {
+      public void toHandle(BufferedOutputStream out, AtomicReference<Request> request) {
+        try {
+          out.write((
+                  "HTTP/1.1 200 Ok\r\n" +
+                          "Content-Length: 0\r\n" +
+                          "Connection: close\r\n" +
+                          "\r\n"
+          ).getBytes());
+          out.flush();
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+    server.setNewHandler("POST", "/messages", new Handler() {
+      @Override
+      public void toHandle(BufferedOutputStream out, AtomicReference<Request> request) {
         try {
           out.write((
                   "HTTP/1.1 200 Ok\r\n" +

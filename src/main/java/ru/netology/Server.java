@@ -5,28 +5,27 @@ import java.net.ServerSocket;
 import java.util.concurrent.*;
 
 public class Server {
-    protected ServerSocket socket;
+    ServerSocket socket;
+    int port;
     protected ConcurrentHashMap<String,ConcurrentHashMap<String,Handler>> handlers = new ConcurrentHashMap<>();
     ExecutorService service;
     public Server(int port) {
-        try {
-            socket = new ServerSocket(port);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        service = Executors.newFixedThreadPool(64);
+        this.port = port;
     }
     public void start() {
+        try {
+            socket = new ServerSocket(port);
+            service = Executors.newFixedThreadPool(64);
+            System.out.println("Server started with port: " + port);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         while (true) {
-            try {
-                service.submit(new ConnectionController(this));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            service.submit(new ConnectionController(this.socket, this.handlers));
         }
     }
     public void setNewHandler(String method, String path, Handler handler) {
         var pathMap = handlers.computeIfAbsent(method,k->new ConcurrentHashMap<>());
-        pathMap.put(method,handler);
+        pathMap.put(path,handler);
     }
 }
