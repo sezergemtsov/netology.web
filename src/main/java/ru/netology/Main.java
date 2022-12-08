@@ -52,6 +52,9 @@ public class Main {
             System.out.print(x.getValue()+"\r\n");
           });
         }
+        if (request.get().getMultipartFormDataParams() != null) {
+          request.get().getMultipartFormDataParams().forEach(System.out::println);
+        }
         try {
           out.write((
                   "HTTP/1.1 200 Ok\r\n" +
