@@ -13,11 +13,11 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ConnectionController implements Runnable {
 
     ServerSocket socket;
-    ConcurrentHashMap<String, ConcurrentHashMap<String,Handler>> handlers;
+    ConcurrentHashMap<String, ConcurrentHashMap<String, Handler>> handlers;
 
     final AtomicReference<Request> request;
 
-    protected ConnectionController(ServerSocket socket, ConcurrentHashMap<String,ConcurrentHashMap<String,Handler>> handlers) {
+    protected ConnectionController(ServerSocket socket, ConcurrentHashMap<String, ConcurrentHashMap<String, Handler>> handlers) {
         this.socket = socket;
         this.handlers = handlers;
         request = new AtomicReference<>(new Request());
@@ -34,7 +34,7 @@ public class ConnectionController implements Runnable {
 
             in.mark(0);
             final var buffer = new byte[limit];
-            final var read = in.read(buffer,0,limit);
+            final var read = in.read(buffer, 0, limit);
 
             // ищем request line
             final var requestLineDelimiter = new byte[]{'\r', '\n'};
@@ -91,6 +91,8 @@ public class ConnectionController implements Runnable {
                     request.get().setBody(body);
                     if (extractHeader(headers, "Content-Type").get().equals("application/x-www-form-urlencoded")) {
                         request.get().setxWWWFormEncodedParams();
+                    } else if (extractHeader(headers, "Content-Type").get().contains("multipart/form-data")) {
+                        request.get().setMultipartFormDataParams();
                     }
                 }
             }
@@ -100,6 +102,7 @@ public class ConnectionController implements Runnable {
             throw new RuntimeException(e);
         }
     }
+
     private static Optional<String> extractHeader(List<String> headers, String header) {
         return headers.stream()
                 .filter(o -> o.startsWith(header))
@@ -107,6 +110,7 @@ public class ConnectionController implements Runnable {
                 .map(String::trim)
                 .findFirst();
     }
+
     private static void badRequest(BufferedOutputStream out) throws IOException {
         out.write((
                 "HTTP/1.1 400 Bad Request\r\n" +
@@ -116,6 +120,7 @@ public class ConnectionController implements Runnable {
         ).getBytes());
         out.flush();
     }
+
     private static void notFound(BufferedOutputStream out) throws IOException {
         out.write((
                 "HTTP/1.1 404 Not Found\r\n" +
@@ -125,6 +130,7 @@ public class ConnectionController implements Runnable {
         ).getBytes());
         out.flush();
     }
+
     // from Google guava with modifications
     private static int indexOf(byte[] array, byte[] target, int start, int max) {
         outer:
