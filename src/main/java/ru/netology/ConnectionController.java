@@ -87,9 +87,11 @@ public class ConnectionController implements Runnable {
                 if (contentLength.isPresent()) {
                     final var length = Integer.parseInt(contentLength.get());
                     final var bodyBytes = in.readNBytes(length);
-
                     final var body = new String(bodyBytes);
-                    System.out.println(body);
+                    request.get().setBody(body);
+                    if (extractHeader(headers, "Content-Type").get().equals("application/x-www-form-urlencoded")) {
+                        request.get().setxWWWFormEncodedParams();
+                    }
                 }
             }
             handlers.get(request.get().getMethod()).get(request.get().getPath()).toHandle(out, request);

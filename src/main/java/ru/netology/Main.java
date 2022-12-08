@@ -40,6 +40,18 @@ public class Main {
     server.setNewHandler("POST", "/messages", new Handler() {
       @Override
       public void toHandle(BufferedOutputStream out, AtomicReference<Request> request) {
+        if (request.get().getMethod() != null) {
+          System.out.println(request.get().getMethod());
+        }
+        if (request.get().getPath() != null) {
+          System.out.println(request.get().getPath());
+        }
+        if (request.get().getxWWWFormEncodedParams() != null) {
+          request.get().getxWWWFormEncodedParams().forEach(x->{
+            System.out.print(x.getName()+" = ");
+            System.out.print(x.getValue()+"\r\n");
+          });
+        }
         try {
           out.write((
                   "HTTP/1.1 200 Ok\r\n" +

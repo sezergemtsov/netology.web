@@ -2,6 +2,7 @@ package ru.netology;
 
 import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.core5.net.URLEncodedUtils;
+import org.apache.hc.core5.net.WWWFormCodec;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -10,7 +11,9 @@ public class Request {
     private String method;
     private String path;
     private List<String> headers;
+    private String body;
     private List<NameValuePair> queryParams;
+    private List<NameValuePair> xWWWFormEncodedParams;
 
 
     public void setMethod(String method) {
@@ -44,5 +47,17 @@ public class Request {
 
     public List<NameValuePair> getQueryParams() {
         return queryParams;
+    }
+
+    public List<NameValuePair> getxWWWFormEncodedParams() {
+        return xWWWFormEncodedParams;
+    }
+
+    public void setxWWWFormEncodedParams() {
+        this.xWWWFormEncodedParams = WWWFormCodec.parse(body,StandardCharsets.UTF_8);
+    }
+
+    public void setBody(String body) {
+        this.body = body;
     }
 }
