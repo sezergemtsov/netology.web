@@ -2,36 +2,31 @@ package ru.netology;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.List;
 import java.util.concurrent.*;
 
-public class Server implements Runnable {
-
-    protected ServerSocket serverSocket;
-    protected List<String> validPaths;
+public class Server {
+    protected ServerSocket socket;
+    protected ConcurrentHashMap<String,ConcurrentHashMap<String,Handler>> handlers = new ConcurrentHashMap<>();
     ExecutorService service;
-    Thread t= new Thread(this);
-
-    public Server(int port, List<String> validPaths) {
+    public Server(int port) {
         try {
-            serverSocket = new ServerSocket(port);
+            socket = new ServerSocket(port);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        this.validPaths = validPaths;
         service = Executors.newFixedThreadPool(64);
-        t.start();
     }
-
-    @Override
-    public void run() {
+    public void start() {
         while (true) {
             try {
-                Connection newConnection = new Connection(this);
-                service.submit(newConnection);
+                service.submit(new ConnectionController(this));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+    }
+    public void setNewHandler(String method, String path, Handler handler) {
+        var pathMap = handlers.computeIfAbsent(method,k->new ConcurrentHashMap<>());
+        pathMap.put(method,handler);
     }
 }
